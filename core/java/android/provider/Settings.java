@@ -1748,6 +1748,12 @@ public final class Settings {
          */
         public static final String SIP_ASK_ME_EACH_TIME = "SIP_ASK_ME_EACH_TIME";
 
+	/** @hide */
+	public static final String OVERSCROLL_EFFECT = "overscroll_effect";
+
+	/** @hide */
+	public static final String OVERSCROLL_WEIGHT = "overscroll_weight";
+
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
