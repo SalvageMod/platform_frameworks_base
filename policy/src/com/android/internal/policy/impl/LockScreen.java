@@ -77,6 +77,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private AudioManager am = (AudioManager)getContext().getSystemService(Context.AUDIO_SERVICE);
     private boolean mWasMusicActive = am.isMusicActive();
     private boolean mIsMusicActive = false;
+    private TextView mNowPlaying;
 
     // current configuration state of keyboard and display
     private int mKeyboardHidden;
@@ -224,6 +225,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mPauseIcon = (ImageButton) findViewById(R.id.musicControlPause);
         mRewindIcon = (ImageButton) findViewById(R.id.musicControlPrevious);
         mForwardIcon = (ImageButton) findViewById(R.id.musicControlNext);
+        mNowPlaying = (TextView) findViewById(R.id.musicNowPlaying);
+        mNowPlaying.setSelected(true); // set focus to TextView to allow scrolling
+        mNowPlaying.setTextColor(0xffffffff);
 
         mScreenLocked = (TextView) findViewById(R.id.screenLocked);
         mSelector = (SlidingTab) findViewById(R.id.tab_selector);
@@ -339,6 +343,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         refreshBatteryStringAndIcon();
         refreshAlarmDisplay();
         refreshMusicStatus();
+        refreshPlayingTitle();
 
         mTimeFormat = DateFormat.getTimeFormat(getContext());
         mDateFormatString = getContext().getString(R.string.full_wday_month_day_no_year);
@@ -513,6 +518,16 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         }
     }
 
+    private void refreshPlayingTitle() {
+        if (am.isMusicActive()) {
+            mNowPlaying.setText(KeyguardViewMediator.NowPlaying());
+            mNowPlaying.setVisibility(View.VISIBLE);
+        } else {
+            mNowPlaying.setVisibility(View.GONE);
+            mNowPlaying.setText("");
+        }
+    }
+
     private void sendMediaButtonEvent(int code) {
         long eventtime = SystemClock.uptimeMillis();
 
@@ -530,6 +545,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     /** {@inheritDoc} */
     public void onTimeChanged() {
         refreshTimeAndDateDisplay();
+    }
+
+    /** {@inheritDoc} */
+    public void onMusicChanged() {
+        refreshPlayingTitle();
     }
 
     private void refreshTimeAndDateDisplay() {
