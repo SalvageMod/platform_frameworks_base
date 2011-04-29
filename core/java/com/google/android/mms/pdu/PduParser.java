@@ -29,8 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import android.content.res.Resources;
-
 public class PduParser {
     /**
      *  The next are WAP values defined in WSP specification.
@@ -164,6 +162,13 @@ public class PduParser {
                     // The MMS content type must be "application/vnd.wap.multipart.mixed"
                     // or "application/vnd.wap.multipart.related"
                     // or "application/vnd.wap.multipart.alternative"
+                    return retrieveConf;
+                } else if (ctTypeStr.equals(ContentType.MULTIPART_ALTERNATIVE)) {
+                    // "application/vnd.wap.multipart.alternative"
+                    // should take only the first part.
+                    PduPart firstPart = mBody.getPart(0);
+                    mBody.removeAll();
+                    mBody.addPart(0, firstPart);
                     return retrieveConf;
                 }
                 return null;
@@ -1552,21 +1557,25 @@ public class PduParser {
                          * Attachment = <Octet 129>
                          * Inline = <Octet 130>
                          */
-
-                        /*
-                         * some carrier mmsc servers do not support content_disposition
-                         * field correctly
-                         */
-                        boolean contentDisposition = Resources.getSystem().getBoolean(com
-                                .android.internal.R.bool.config_mms_content_disposition_support);
-
-                        if (contentDisposition) {
-                            int len = parseValueLength(pduDataStream);
-                            pduDataStream.mark(1);
-                            int thisStartPos = pduDataStream.available();
-                            int thisEndPos = 0;
-                            int value = pduDataStream.read();
-
+                        int len = -1;
+                        boolean validDispositionLength = true;
+                        pduDataStream.mark(1);
+                        
+                        try {
+                            len = parseValueLength(pduDataStream);
+                        } catch (RuntimeException e) { 
+                            // tolerate invalid content-disposition length
+                            len = 31;
+                            validDispositionLength = false;
+                            pduDataStream.reset();
+                        }
+                        
+                        pduDataStream.mark(1);
+                        int thisStartPos = pduDataStream.available();
+                        int thisEndPos = 0;
+                        int value = pduDataStream.read();
+                        
+                        if (validDispositionLength) {
                             if (value == PduPart.P_DISPOSITION_FROM_DATA ) {
                                 part.setContentDisposition(PduPart.DISPOSITION_FROM_DATA);
                             } else if (value == PduPart.P_DISPOSITION_ATTACHMENT) {
@@ -1576,31 +1585,33 @@ public class PduParser {
                             } else {
                                 pduDataStream.reset();
                                 /* Token-text */
-                                part.setContentDisposition(parseWapString(pduDataStream
-                                        , TYPE_TEXT_STRING));
+                                part.setContentDisposition(parseWapString(pduDataStream, TYPE_TEXT_STRING));
+                            }
+                        } else {
+                            pduDataStream.reset();
+                            /* Token-text */
+                            part.setContentDisposition(parseWapString(pduDataStream, TYPE_TEXT_STRING));
+                        }
+
+                        /* get filename parameter and skip other parameters */
+                        thisEndPos = pduDataStream.available();
+                        if (thisStartPos - thisEndPos < len) {
+                            value = pduDataStream.read();
+                            if (value == PduPart.P_FILENAME) { //filename is text-string
+                                part.setFilename(parseWapString(pduDataStream, TYPE_TEXT_STRING));
                             }
 
-                            /* get filename parameter and skip other parameters */
+                            /* skip other parameters */
                             thisEndPos = pduDataStream.available();
                             if (thisStartPos - thisEndPos < len) {
-                                value = pduDataStream.read();
-                                if (value == PduPart.P_FILENAME) { //filename is text-string
-                                    part.setFilename(parseWapString(pduDataStream
-                                            , TYPE_TEXT_STRING));
-                                }
-
-                                /* skip other parameters */
-                                thisEndPos = pduDataStream.available();
-                                if (thisStartPos - thisEndPos < len) {
-                                    int last = len - (thisStartPos - thisEndPos);
-                                    byte[] temp = new byte[last];
-                                    pduDataStream.read(temp, 0, last);
-                                }
+                                int last = len - (thisStartPos - thisEndPos);
+                                byte[] temp = new byte[last];
+                                pduDataStream.read(temp, 0, last);
                             }
-
-                            tempPos = pduDataStream.available();
-                            lastLen = length - (startPos - tempPos);
                         }
+
+                        tempPos = pduDataStream.available();
+                        lastLen = length - (startPos - tempPos);
                         break;
                     default:
                         if (LOCAL_LOGV) {

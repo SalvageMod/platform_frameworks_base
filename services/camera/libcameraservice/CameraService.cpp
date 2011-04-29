@@ -19,7 +19,10 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
@@ -52,6 +55,16 @@ static void setLogLevel(int level) {
 }
 
 // ----------------------------------------------------------------------------
+
+struct camera_size_type {
+    int width;
+    int height;
+};
+
+static const camera_size_type preview_sizes[] = {
+    { 1280, 720 }, // 720P
+    { 768, 432 },
+};
 
 static int getCallingPid() {
     return IPCThreadState::self()->getCallingPid();
@@ -155,6 +168,13 @@ sp<ICamera> CameraService::connect(
     client = new Client(this, cameraClient, hardware, cameraId, info.facing,
                         callingPid);
     mClient[cameraId] = client;
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+    if (client->mHardware == NULL) {
+        client = NULL;
+        mClient[cameraId] = NULL;
+        return client;
+    }
+#endif
     LOG1("CameraService::connect X");
     return client;
 }
@@ -305,27 +325,33 @@ CameraService::Client::Client(const sp<CameraService>& cameraService,
     mCameraId = cameraId;
     mCameraFacing = cameraFacing;
     mClientPid = clientPid;
-    mUseOverlay = mHardware->useOverlay();
     mMsgEnabled = 0;
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+    if (mHardware != NULL) {
+#endif
+        mUseOverlay = mHardware->useOverlay();
 
-    mHardware->setCallbacks(notifyCallback,
-                            dataCallback,
-                            dataCallbackTimestamp,
-                            (void *)cameraId);
+        mHardware->setCallbacks(notifyCallback,
+                                dataCallback,
+                                dataCallbackTimestamp,
+                                (void *)cameraId);
 
-    // Enable zoom, error, and focus messages by default
-    enableMsgType(CAMERA_MSG_ERROR |
-                  CAMERA_MSG_ZOOM |
-                  CAMERA_MSG_FOCUS);
-    mOverlayW = 0;
-    mOverlayH = 0;
+        // Enable zoom, error, and focus messages by default
+        enableMsgType(CAMERA_MSG_ERROR |
+                      CAMERA_MSG_ZOOM |
+                      CAMERA_MSG_FOCUS);
+        mOverlayW = 0;
+        mOverlayH = 0;
 
-    // Callback is disabled by default
-    mPreviewCallbackFlag = FRAME_CALLBACK_FLAG_NOOP;
-    mOrientation = getOrientation(0, mCameraFacing == CAMERA_FACING_FRONT);
-    mOrientationChanged = false;
-    cameraService->setCameraBusy(cameraId);
-    cameraService->loadSound();
+        // Callback is disabled by default
+        mPreviewCallbackFlag = FRAME_CALLBACK_FLAG_NOOP;
+        mOrientation = getOrientation(0, mCameraFacing == CAMERA_FACING_FRONT);
+        mOrientationChanged = false;
+        cameraService->setCameraBusy(cameraId);
+        cameraService->loadSound();
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+    }
+#endif
     LOG1("Client::Client X (pid %d)", callingPid);
 }
 
@@ -468,6 +494,12 @@ void CameraService::Client::disconnect() {
     mHardware->release();
     // Release the held overlay resources.
     if (mUseOverlay) {
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+        /* Release previous overlay handle */
+        if (mOverlay != NULL) {
+            mOverlay->destroy();
+        }
+#endif
         mOverlayRef = 0;
     }
     mHardware.clear();
@@ -510,9 +542,15 @@ status_t CameraService::Client::setPreviewDisplay(const sp<ISurface>& surface) {
     mOverlayRef = 0;
     // If preview has been already started, set overlay or register preview
     // buffers now.
-    if (mHardware->previewEnabled()) {
+    if (mHardware->previewEnabled() || mUseOverlay) {
         if (mUseOverlay) {
-            result = setOverlay();
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+            if (mSurface != NULL) {
+#endif
+                result = setOverlay();
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+            }
+#endif
         } else if (mSurface != 0) {
             result = registerPreviewBuffers();
         }
@@ -525,6 +563,13 @@ status_t CameraService::Client::registerPreviewBuffers() {
     int w, h;
     CameraParameters params(mHardware->getParameters());
     params.getPreviewSize(&w, &h);
+
+    //for 720p recording , preview can be 800X448
+    if(w ==  preview_sizes[0].width && h== preview_sizes[0].height){
+        LOGD("registerpreviewbufs :changing dimensions to 768X432 for 720p recording.");
+        w = preview_sizes[1].width;
+        h = preview_sizes[1].height;
+    }
 
     // FIXME: don't use a hardcoded format here.
     ISurface::BufferHeap buffers(w, h, w, h,
@@ -545,11 +590,23 @@ status_t CameraService::Client::setOverlay() {
     CameraParameters params(mHardware->getParameters());
     params.getPreviewSize(&w, &h);
 
+    //for 720p recording , preview can be 800X448
+    if(w == preview_sizes[0].width && h==preview_sizes[0].height){
+        LOGD("Changing overlay dimensions to 768X432 for 720p recording.");
+        w = preview_sizes[1].width;
+        h = preview_sizes[1].height;
+    }
+
     if (w != mOverlayW || h != mOverlayH || mOrientationChanged) {
         // Force the destruction of any previous overlay
         sp<Overlay> dummy;
         mHardware->setOverlay(dummy);
         mOverlayRef = 0;
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+        if (mOverlay != NULL) {
+            mOverlay->destroy();
+        }
+#endif
         mOrientationChanged = false;
     }
 
@@ -565,7 +622,12 @@ status_t CameraService::Client::setOverlay() {
             // wait in the createOverlay call if the previous overlay is in the
             // process of being destroyed.
             for (int retry = 0; retry < 50; ++retry) {
-                mOverlayRef = mSurface->createOverlay(w, h, OVERLAY_FORMAT_DEFAULT,
+                mOverlayRef = mSurface->createOverlay(w, h,
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+                                                      HAL_PIXEL_FORMAT_YCbCr_420_SP,
+#else
+                                                      OVERLAY_FORMAT_DEFAULT,
+#endif
                                                       mOrientation);
                 if (mOverlayRef != 0) break;
                 LOGW("Overlay create failed - retrying");
@@ -575,7 +637,12 @@ status_t CameraService::Client::setOverlay() {
                 LOGE("Overlay Creation Failed!");
                 return -EINVAL;
             }
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+            mOverlay = new Overlay(mOverlayRef);
+            result = mHardware->setOverlay(mOverlay);
+#else
             result = mHardware->setOverlay(new Overlay(mOverlayRef));
+#endif
         }
     }
     if (result != NO_ERROR) {
@@ -661,8 +728,13 @@ status_t CameraService::Client::startPreviewMode() {
         if (mSurface != 0) {
             result = setOverlay();
         }
-        if (result != NO_ERROR) return result;
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
         result = mHardware->startPreview();
+#endif
+        if (result != NO_ERROR) return result;
+#ifndef USE_OVERLAY_FORMAT_YCbCr_420_SP
+        result = mHardware->startPreview();
+#endif
     } else {
         enableMsgType(CAMERA_MSG_PREVIEW_FRAME);
         result = mHardware->startPreview();
@@ -677,6 +749,19 @@ status_t CameraService::Client::startPreviewMode() {
     }
     return result;
 }
+
+#ifdef USE_GETBUFFERINFO
+status_t CameraService::Client::getBufferInfo(sp<IMemory>& Frame, size_t *alignedSize)
+{
+    LOGD(" getBufferInfo : E");
+    if (mHardware == NULL) {
+        LOGE("mHardware is NULL, returning.");
+        Frame = NULL;
+        return INVALID_OPERATION;
+    }
+    return mHardware->getBufferInfo(Frame, alignedSize);
+}
+#endif
 
 status_t CameraService::Client::startRecordingMode() {
     LOG1("startRecordingMode");
@@ -716,6 +801,11 @@ void CameraService::Client::stopPreview() {
 
     if (mSurface != 0 && !mUseOverlay) {
         mSurface->unregisterBuffers();
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
+    } else {
+        mOverlayW = 0;
+        mOverlayH = 0;
+#endif
     }
 
     mPreviewBuffer.clear();
@@ -1292,4 +1382,73 @@ status_t CameraService::dump(int fd, const Vector<String16>& args) {
     return NO_ERROR;
 }
 
+#ifdef BOARD_USE_FROYO_LIBCAMERA
+static const CameraInfo sCameraInfo[] = {
+    {
+        CAMERA_FACING_BACK,
+        90,  /* orientation */
+    },
+    {
+        CAMERA_FACING_FRONT,
+        270, /* orientation */
+    }
+};
+
+#define HTC_SWITCH_CAMERA_FILE_PATH "/sys/android_camera2/htcwc"
+
+static int getNumberOfCameras() {
+    if (access(HTC_SWITCH_CAMERA_FILE_PATH, W_OK) == 0) {
+        return 2;
+    }
+    /* FIXME: Support non-HTC front camera */
+    return 1;
+}
+
+static void htcCameraSwitch(int cameraId)
+{
+    char buffer[16];
+    int fd;
+
+    snprintf(buffer, sizeof(buffer), "%d", cameraId);
+
+    fd = open(HTC_SWITCH_CAMERA_FILE_PATH, O_WRONLY);
+    write(fd, buffer, strlen(buffer));
+    close(fd);
+}
+
+extern "C" int HAL_getNumberOfCameras()
+{
+    return getNumberOfCameras();
+}
+
+extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
+{
+    memcpy(cameraInfo, &sCameraInfo[cameraId], sizeof(CameraInfo));
+}
+
+extern "C" sp<CameraHardwareInterface> openCameraHardware(int cameraId);
+
+extern "C" sp<CameraHardwareInterface> HAL_openCameraHardware(int cameraId)
+{
+    LOGV("openCameraHardware: call createInstance");
+    if (getNumberOfCameras() == 2) {
+        htcCameraSwitch(cameraId);
+#ifdef BOARD_USE_REVERSE_FFC
+        if (cameraId == 1) {
+            /* Change default parameters for the front camera */
+            sp<CameraHardwareInterface> hardware = openCameraHardware(cameraId);
+            if (hardware != NULL) {
+                CameraParameters params(hardware->getParameters());
+                params.set("front-camera-mode", "reverse"); // default is "mirror"
+                hardware->setParameters(params);
+            }
+            return hardware;
+        }
+#endif
+    }
+    return openCameraHardware(cameraId);
+}
+#endif
+
 }; // namespace android
+
