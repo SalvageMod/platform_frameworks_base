@@ -1,6 +1,8 @@
-/*
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* //device/apps/common/res/anim/slide_out_right_basic.xml
 **
-** Copyright 2007, The Android Open Source Project
+** Copyright 2010, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License"); 
 ** you may not use this file except in compliance with the License. 
@@ -14,21 +16,8 @@
 ** See the License for the specific language governing permissions and 
 ** limitations under the License.
 */
+-->
 
-package android.database;
-
-import android.net.Uri;
-
-/**
- * @hide
- */
-interface IContentObserver
-{
-    /**
-     * This method is called when an update occurs to the cursor that is being
-     * observed. selfUpdate is true if the update was caused by a call to
-     * commit on the cursor that is being observed.
-     */
-    oneway void onChange(boolean selfUpdate);
-    oneway void onChangeUri(in Uri uri, boolean selfUpdate);
-}
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fromXDelta="0" android:toXDelta="-100%p"
+    android:duration="@android:integer/config_mediumAnimTime" />

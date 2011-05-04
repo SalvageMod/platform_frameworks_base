@@ -250,6 +250,7 @@ public class PowerWidget extends FrameLayout {
             resolver.unregisterContentObserver(this);
         }
 
+        @Override
         public void onChangeUri(Uri uri, boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             Resources res = mContext.getResources();

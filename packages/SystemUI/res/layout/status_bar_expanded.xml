@@ -33,6 +33,7 @@
         android:paddingRight="3dp"
         android:background="@drawable/title_bar_portrait"
         >
+
         <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

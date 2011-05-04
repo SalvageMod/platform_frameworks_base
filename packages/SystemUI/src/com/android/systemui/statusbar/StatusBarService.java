@@ -16,8 +16,6 @@
 
 package com.android.systemui.statusbar;
 
-import android.app.Service;
-import com.android.internal.statusbar.IStatusBar;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.internal.statusbar.StatusBarIconList;
@@ -41,17 +39,17 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.os.Binder;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Slog;
 import android.util.Log;
+import android.util.Slog;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -65,23 +63,18 @@ import android.view.WindowManager;
 import android.view.WindowManagerImpl;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.FrameLayout;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
-
-import com.android.systemui.R;
-import com.android.systemui.statusbar.policy.StatusBarPolicy;
-
-
 
 public class StatusBarService extends Service implements CommandQueue.Callbacks {
     static final String TAG = "StatusBarService";
@@ -157,7 +150,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mTicking;
 
     // Tracking finger for opening/closing.
-    int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
+    int mEdgeBorder; 
+    // corresponds to R.dimen.status_bar_edge_ignore
     boolean mTracking;
     VelocityTracker mVelocityTracker;
 
@@ -213,7 +207,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         try {
             mBarService.registerStatusBar(mCommandQueue, iconList, notificationKeys, notifications);
         } catch (RemoteException ex) {
-            // If the system process isn't there we're doomed anyway.
+            // If the system process isnt there were doomed anyway.
         }
 
         // Set up the initial icon state
@@ -247,7 +241,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     @Override
     public void onDestroy() {
-        // we're never destroyed
+        // we are never destroyed
     }
 
     /**
@@ -273,7 +267,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         StatusBarView sb = (StatusBarView)View.inflate(context, R.layout.status_bar, null);
         sb.mService = this;
 
-        // figure out which pixel-format to use for the status bar.
+        // figure out which pixel-ormat to use for the status bar.
         mPixelFormat = PixelFormat.TRANSLUCENT;
         Drawable bg = sb.getBackground();
         if (bg != null) {
@@ -396,7 +390,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 notification.notification.fullScreenIntent.send();
             } catch (PendingIntent.CanceledException e) {
             }
-        } 
+        }
 
         StatusBarIconView iconView = addNotificationViews(key, notification);
         if (iconView == null) return;
@@ -404,7 +398,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (shouldTick) {
             tick(notification);
         }
-        
+
         // Recalculate the position of the sliding windows and the titles.
         setAreThereNotifications();
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
@@ -439,8 +433,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     + " contentView=" + contentView);
         }
 
-        // Can we just reapply the RemoteViews in place?  If when didn't change, the order
-        // didn't change.
+        // Can we just reapply the RemoteViews in place?  If when didnt change, the order
+        // didnt change.
         if (notification.notification.when == oldNotification.notification.when
                 && notification.isOngoing() == oldNotification.isOngoing()
                 && oldEntry.expanded != null
@@ -481,7 +475,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             addNotificationViews(key, notification);
         }
 
-        // Restart the ticker if it's still running
+        // Restart the ticker if its still running
         if (notification.notification.tickerText != null
                 && !TextUtils.equals(notification.notification.tickerText,
                     oldEntry.notification.notification.tickerText)) {
@@ -498,7 +492,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         StatusBarNotification old = removeNotificationViews(key);
 
         if (old != null) {
-            // Cancel the ticker if it's still running
+            // Cancel the ticker if its still running
             mTicker.removeEntry(old);
 
             // Recalculate the position of the sliding windows and the titles.
@@ -516,7 +510,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    View[] makeNotificationView(StatusBarNotification notification, ViewGroup parent) {
+    View[] makeNotificationView(final StatusBarNotification notification, ViewGroup parent) {
         Notification n = notification.notification;
         RemoteViews remoteViews = n.contentView;
         if (remoteViews == null) {
@@ -525,7 +519,18 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // create the row view
         LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View row = inflater.inflate(R.layout.status_bar_latest_event, parent, false);
+        LatestItemContainer row = (LatestItemContainer) inflater.inflate(R.layout.status_bar_latest_event, parent, false);
+        if ((n.flags & Notification.FLAG_ONGOING_EVENT) == 0 && (n.flags & Notification.FLAG_NO_CLEAR) == 0) {
+            row.setOnSwipeCallback(new Runnable() {
+                public void run() {
+                    try {
+                        mBarService.onNotificationClear(notification.pkg, notification.tag, notification.id);
+                    } catch (RemoteException e) {
+			// Skip it, dont crash
+                    }
+                }
+            });
+        }
 
         // bind the click event to the content area
         ViewGroup content = (ViewGroup)row.findViewById(R.id.content);
@@ -689,7 +694,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     View.OnFocusChangeListener mFocusChangeListener = new View.OnFocusChangeListener() {
         public void onFocusChange(View v, boolean hasFocus) {
-            // Because 'v' is a ViewGroup, all its children will be (un)selected
+            // Because v is a ViewGroup, all its children will be (un)selected
             // too, which allows marqueeing to work.
             v.setSelected(hasFocus);
         }
@@ -751,8 +756,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         } else {
             y = mDisplay.getHeight()-1;
         }
-        // Let the fling think that we're open so it goes in the right direction
-        // and doesn't try to re-open the windowshade.
+        // Let the fling think that were open so it goes in the right direction
+        // and doesnt try to re-open the windowshade.
         mExpanded = true;
         prepareTracking(y, false);
         performFling(y, -2000.0f, true);
@@ -884,7 +889,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mCurAnimationTime);
             makeExpandedVisible();
         } else {
-            // it's open, close it?
+            // its open, close it?
             if (mAnimating) {
                 mAnimating = false;
                 mHandler.removeMessages(MSG_ANIMATE);
@@ -906,7 +911,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (!always && (
                     vel > 200.0f
                     || (y > (mDisplayHeight-25) && vel > -200.0f))) {
-                // We are expanded, but they didn't move sufficiently to cause
+                // We are expanded, but they didnt move sufficiently to cause
                 // us to retract.  Animate back to the expanded position.
                 mAnimAccel = 2000.0f;
                 if (vel < 0) {
@@ -932,7 +937,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             }
             else {
-                // We are collapsed, but they didn't move sufficiently to cause
+                // We are collapsed, but they didnt move sufficiently to cause
                 // us to retract.  Animate back to the collapsed position.
                 mAnimAccel = -2000.0f;
                 if (vel > 0) {
@@ -987,7 +992,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 int x = (int)event.getRawX();
                 final int edgeBorder = mEdgeBorder;
                 if (x >= edgeBorder && x < mDisplay.getWidth() - edgeBorder) {
-                    prepareTracking(y, !mExpanded);// opening if we're not already fully visible
+                    prepareTracking(y, !mExpanded);// opening if were not already fully visible
                     mVelocityTracker.addMovement(event);
                 }
             }
@@ -1044,7 +1049,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public void onClick(View v) {
             try {
                 // The intent we are sending is for the application, which
-                // won't have permission to immediately start an activity after
+                // wont have permission to immediately start an activity after
                 // the user switches to home.  We know it is safe to do at this
                 // point, so make sure new activity switches are now allowed.
                 ActivityManagerNative.getDefault().resumeAppSwitches();
@@ -1060,7 +1065,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 try {
                     mIntent.send(StatusBarService.this, 0, overlay);
                 } catch (PendingIntent.CanceledException e) {
-                    // the stack trace isn't very helpful here.  Just log the exception message.
+                    // the stack trace isnt very helpful here.  Just log the exception message.
                     Slog.w(TAG, "Sending contentIntent failed: " + e);
                 }
             }
@@ -1068,7 +1073,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             try {
                 mBarService.onNotificationClick(mPkg, mTag, mId);
             } catch (RemoteException ex) {
-                // system process is dead if we're here.
+                // system process is dead if were here.
             }
 
             // close the shade if it was open
@@ -1077,9 +1082,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private void tick(StatusBarNotification n) {
-        // Show the ticker if one is requested. Also don't do this
+        // Show the ticker if one is requested. Also dont do this
         // until status bar window is attached to the window manager,
-        // because...  well, what's the point otherwise?  And trying to
+        // because...  well, whats the point otherwise?  And trying to
         // run a ticker without being attached will crash!
         if (n.notification.tickerText != null && mStatusBarView.getWindowToken() != null) {
             if (0 == (mDisabled & (StatusBarManager.DISABLE_NOTIFICATION_ICONS
@@ -1093,7 +1098,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
      * Cancel this notification and tell the StatusBarManagerService / NotificationManagerService
      * about the failure.
      *
-     * WARNING: this will call back into us.  Don't hold any locks.
+     * WARNING: this will call back into us.  Dont hold any locks.
      */
     void handleNotificationError(IBinder key, StatusBarNotification n, String message) {
         removeNotification(key);
@@ -1297,7 +1302,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     void updateExpandedViewPos(int expandedPosition) {
         if (SPEW) {
             Slog.d(TAG, "updateExpandedViewPos before expandedPosition=" + expandedPosition
-                    + " mTrackingParams.y=" 
+                    + " mTrackingParams.y="
                     + ((mTrackingParams == null) ? "???" : mTrackingParams.y)
                     + " mTrackingPosition=" + mTrackingPosition);
         }
@@ -1305,7 +1310,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int h = mStatusBarView.getHeight();
         int disph = mDisplay.getHeight();
 
-        // If the expanded view is not visible, make sure they're still off screen.
+        // If the expanded view is not visible, make sure theyre still off screen.
         // Maybe the view was resized.
         if (!mExpandedVisible) {
             if (mTrackingView != null) {
@@ -1363,7 +1368,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
                 boolean visible = (mTrackingPosition + mTrackingView.getHeight()) > h;
                 if (!visible) {
-                    // if the contents aren't visible, move the expanded view way off screen
+                    // if the contents arent visible, move the expanded view way off screen
                     // because the window itself extends below the content view.
                     mExpandedParams.y = -disph;
                 }
@@ -1397,7 +1402,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     /**
      * The LEDs are turned o)ff when the notification panel is shown, even just a little bit.
      * This was added last-minute and is inconsistent with the way the rest of the notifications
-     * are handled, because the notification isn't really cancelled.  The lights are just
+     * are handled, because the notification isnt really cancelled.  The lights are just
      * turned off.  If any other notifications happen, the lights will turn back on.  Steve says
      * this is what he wants. (see bug 1131461)
      */
@@ -1407,7 +1412,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             try {
                 mBarService.onPanelRevealed();
             } catch (RemoteException ex) {
-                // Won't fail unless the world has ended.
+                // Wont fail unless the world has ended.
             }
         }
     }
@@ -1454,7 +1459,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             try {
                 mBarService.onClearAllNotifications();
             } catch (RemoteException ex) {
-                // system process is dead if we're here.
+                // system process is dead if were here.
             }
             animateCollapse();
         }
@@ -1466,8 +1471,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)
                     || Intent.ACTION_SCREEN_OFF.equals(action)) {
                 animateCollapse();
-            }
-            else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
+            } else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
                 updateResources();
             }
         }
@@ -1476,8 +1480,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     /**
      * Reload some of our resources when the configuration changes.
      *
-     * We don't reload everything when the configuration changes -- we probably
-     * should, but getting that smooth is tough.  Someday we'll fix that.  In the
+     * We dont reload everything when the configuration changes -- we probably
+     * should, but getting that smooth is tough.  Someday well fix that.  In the
      * meantime, just update the things that we know change.
      */
     void updateResources() {
@@ -1524,3 +1528,4 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 }
+
