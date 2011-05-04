@@ -115,6 +115,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private static final int KEYGUARD_DONE_AUTHENTICATING = 11;
     private static final int SET_HIDDEN = 12;
     private static final int KEYGUARD_TIMEOUT = 13;
+    private static long mSongId = 0;
+    private static long mAlbumId = 0;
 
     /**
      * The default amount of time we stay awake (used for all key input)
@@ -248,7 +250,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private static String mArtist = null;
     private static String mTrack = null;
     private static Boolean mPlaying = null;
-
+  
     public KeyguardViewMediator(Context context, PhoneWindowManager callback,
             LocalPowerManager powerManager) {
         mContext = context;
@@ -1149,6 +1151,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             mArtist = intent.getStringExtra("artist");
             mTrack = intent.getStringExtra("track");
             mPlaying = intent.getBooleanExtra("playing", false);
+            mSongId = intent.getLongExtra("songid", 0);
+            mAlbumId = intent.getLongExtra("albumid", 0);
             intent = new Intent("internal.policy.impl.updateSongStatus");
             context.sendBroadcast(intent);
         }
@@ -1159,6 +1163,12 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         } else {
             return "";
         }
+    }
+    public static long SongId() {
+        return mSongId;
+    }
+    public static long AlbumId() {
+        return mAlbumId;
     }
 }
 
