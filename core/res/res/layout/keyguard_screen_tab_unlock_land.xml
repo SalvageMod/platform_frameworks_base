@@ -20,6 +20,7 @@
 <!-- This is the general lock screen which shows information about the
   state of the device, as well as instructions on how to get past it
   depending on the state of the device.-->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
     android:layout_width="match_parent"
@@ -129,12 +130,21 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:drawablePadding="4dip"
             />
+            
+        <TextView
+            android:id="@+id/customMsg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4.0dip"
+            android:layout_below="@id/status2"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            />
 
         <TextView
             android:id="@+id/screenLocked"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/status2"
+            android:layout_below="@id/customMsg"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:gravity="center"
             android:layout_marginTop="12dip"
@@ -153,7 +163,7 @@
             android:padding = "3px"
             android:visibility="gone"
             />
-<!-- music control buttons -->
+	   <!-- music control buttons -->
         <ImageButton
             android:id="@+id/musicControlPlay"
             android:src="@drawable/ic_media_play"
@@ -218,11 +228,26 @@
 
     <!-- right side -->
     <com.android.internal.widget.SlidingTab
+        android:id="@+id/tab_selector2"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        />
+
+    <com.android.internal.widget.SlidingTab
         android:id="@+id/tab_selector"
         android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_marginRight="80dip"
+        android:layout_marginRight="60dip"
+        />
+
+    <com.android.internal.widget.RotarySelector
+        android:id="@+id/rotary_selector"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
         />
 
     <!-- emergency call button shown when sim is PUKd and tab_selector is
@@ -239,3 +264,4 @@
         />
 
 </LinearLayout>
+

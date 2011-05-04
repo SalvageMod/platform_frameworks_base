@@ -417,4 +417,14 @@
     <string name="config_wimaxServiceClassname"></string>
     <!-- Name of the wimax state tracker clas -->
     <string name="config_wimaxStateTrackerClassname"></string>
+
+    <!-- Configure rotary bottom margin -->
+    <integer name="config_rotaryMarginBottomDIP">60</integer>
+    <!-- Configure rotary outer radius -->
+    <integer name="config_rotaryOuterRadiusDIP">390</integer>
+    <!-- Configure rotary stroke width -->
+    <integer name="config_rotaryStrokeWidthDIP">83</integer>
+    <!-- Configure lense unlock time label offset -->
+    <integer name="config_lenseTimeLabelOffsetDIP">0</integer>
+
 </resources>

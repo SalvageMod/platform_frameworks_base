@@ -2373,10 +2373,4 @@
     <!-- Text for message for an unknown external media state [CHAR LIMIT=NONE] -->
     <string name="media_unknown_state">External media in unknown state.</string>
 
-    <string name="lockscreen_discharging">Battery (<xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g>)</string>
-    <string name="lockscreen_phone_label">Phone</string>
-    <!-- Displayed on lock screen's extra right tab - messaging -->
-    <string name="lockscreen_messaging_label">Messaging</string>
-
-
 </resources>

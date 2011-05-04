@@ -50,6 +50,7 @@ import android.view.WindowManagerImpl;
 import android.view.WindowManagerPolicy;
 import android.widget.TextView;
 
+
 /**
  * Mediates requests related to the keyguard.  This includes queries about the
  * state of the keyguard, power management events that effect whether the keyguard
@@ -115,8 +116,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private static final int KEYGUARD_DONE_AUTHENTICATING = 11;
     private static final int SET_HIDDEN = 12;
     private static final int KEYGUARD_TIMEOUT = 13;
-    private static long mSongId = 0;
-    private static long mAlbumId = 0;
 
     /**
      * The default amount of time we stay awake (used for all key input)
@@ -250,7 +249,9 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private static String mArtist = null;
     private static String mTrack = null;
     private static Boolean mPlaying = null;
-  
+    private static long mSongId = 0;
+    private static long mAlbumId = 0;
+
     public KeyguardViewMediator(Context context, PhoneWindowManager callback,
             LocalPowerManager powerManager) {
         mContext = context;
@@ -275,6 +276,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         context.registerReceiver(mBroadCastReceiver, filter);
         mAlarmManager = (AlarmManager) context
                 .getSystemService(Context.ALARM_SERVICE);
+
         mCallback = callback;
 
         mUpdateMonitor = new KeyguardUpdateMonitor(context);
@@ -333,26 +335,56 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             } else if (mShowing) {
                 notifyScreenOffLocked();
                 resetStateLocked();
-            } else if (why == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT) {
-                // if the screen turned off because of timeout, set an alarm
-                // to enable it a little bit later (i.e, give the user a chance
-                // to turn the screen back on within a certain window without
-                // having to unlock the screen)
-                long when = SystemClock.elapsedRealtime() + KEYGUARD_DELAY_MS;
-                Intent intent = new Intent(DELAYED_KEYGUARD_ACTION);
-                intent.putExtra("seq", mDelayedShowingSequence);
-                PendingIntent sender = PendingIntent.getBroadcast(mContext,
-                        0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-                mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, when,
-                        sender);
-                if (DEBUG) Log.d(TAG, "setting alarm to turn off keyguard, seq = "
-                                 + mDelayedShowingSequence);
+            } else if (why == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT
+                    || why == WindowManagerPolicy.OFF_BECAUSE_OF_USER) {
+                final ContentResolver cr = mContext.getContentResolver();
+
+                // retrieve the correct timeout setting depending on why
+                // the screen went off
+                int timeoutDelay = (why == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT ? Settings.System
+                        .getInt(cr, Settings.System.SCREEN_LOCK_TIMEOUT_DELAY, KEYGUARD_DELAY_MS)
+                        : Settings.System
+                                .getInt(cr, Settings.System.SCREEN_LOCK_SCREENOFF_DELAY, 0));
+
+                if (DEBUG)
+                    Log.d(TAG, "Lock screen timeout delay is " + String.valueOf(timeoutDelay)
+                            + "ms");
+
+                // if there is a delay, turn on the screen lock after the delay
+                // expires
+                // otherwise turn it on now
+                if (timeoutDelay > 0) {
+                    delayedScreenLockOn(timeoutDelay);
+                } else {
+                    doKeyguard();
+                }
+
             } else if (why == WindowManagerPolicy.OFF_BECAUSE_OF_PROX_SENSOR) {
                 // Do not enable the keyguard if the prox sensor forced the screen off.
             } else {
                 doKeyguard();
             }
         }
+    }
+
+    /**
+     * Handles setting an alarm to enable the screen lock after a delay
+     */
+    private void delayedScreenLockOn(int delay) {
+        final ContentResolver cr = mContext.getContentResolver();
+
+        mShowLockIcon = (Settings.System.getInt(cr, "show_status_bar_lock", 0) == 1);
+        // set an alarm to enable the screen lock a little bit later
+        // (i.e, give the user a chance to turn the screen back on
+        // within a certain window without having to unlock the screen)
+        long when = SystemClock.elapsedRealtime() + delay;
+        Intent intent = new Intent(DELAYED_KEYGUARD_ACTION);
+        intent.putExtra("seq", mDelayedShowingSequence);
+        PendingIntent sender = PendingIntent.getBroadcast(mContext, 0, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
+        mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, when, sender);
+        if (DEBUG)
+            Log.d(TAG, "setting alarm to turn off keyguard, seq = " + mDelayedShowingSequence);
     }
 
     /**
@@ -1164,12 +1196,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             return "";
         }
     }
+
     public static long SongId() {
         return mSongId;
     }
+
     public static long AlbumId() {
         return mAlbumId;
     }
 }
-
 
