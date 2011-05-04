@@ -476,7 +476,7 @@ class PowerManagerService extends IPowerManager.Stub
                 mAnimationSetting = 0;
                 if (windowScale > 0.5f && mElectronBeamAnimationOff) {
                     mAnimationSetting |= ANIM_SETTING_OFF;
-                }.
+                }
                 if (transitionScale > 0.5f && mElectronBeamAnimationOn) {
                 }
             }
