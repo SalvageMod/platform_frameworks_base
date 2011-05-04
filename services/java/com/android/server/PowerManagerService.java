@@ -64,6 +64,8 @@ import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
 import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
+import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_ON;
+import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_OFF;
 import static android.provider.Settings.System.STAY_ON_WHILE_PLUGGED_IN;
 import static android.provider.Settings.System.WINDOW_ANIMATION_SCALE;
 import static android.provider.Settings.System.TRANSITION_ANIMATION_SCALE;
@@ -144,6 +146,10 @@ class PowerManagerService extends IPowerManager.Stub
     private static final int LIGHTS_MASK        = SCREEN_BRIGHT_BIT | BUTTON_BRIGHT_BIT | KEYBOARD_BRIGHT_BIT;
 
     boolean mAnimateScreenLights = true;
+
+    //electron beam animation control
+    boolean mElectronBeamAnimationOn = false;
+    boolean mElectronBeamAnimationOff = false;
 
     static final int ANIM_STEPS = 60/4;
     // Slower animation for autobrightness changes
@@ -423,6 +429,7 @@ class PowerManagerService extends IPowerManager.Stub
             mMaximumScreenOffTimeout = timeMs;
             // recalculate everything
             setScreenOffTimeoutsLocked();
+
         }
     }
 
@@ -458,16 +465,19 @@ class PowerManagerService extends IPowerManager.Stub
 
                 // recalculate everything
                 setScreenOffTimeoutsLocked();
+                mElectronBeamAnimationOn = Settings.System.getInt(mContext.getContentResolver(),
+                                                          ELECTRON_BEAM_ANIMATION_ON, 0) == 1;
+
+                mElectronBeamAnimationOff = Settings.System.getInt(mContext.getContentResolver(),
+                                                         ELECTRON_BEAM_ANIMATION_OFF, 1) == 1;
 
                 final float windowScale = getFloat(WINDOW_ANIMATION_SCALE, 1.0f);
                 final float transitionScale = getFloat(TRANSITION_ANIMATION_SCALE, 1.0f);
                 mAnimationSetting = 0;
-                if (windowScale > 0.5f) {
+                if (windowScale > 0.5f && mElectronBeamAnimationOff) {
                     mAnimationSetting |= ANIM_SETTING_OFF;
-                }
-                if (transitionScale > 0.5f) {
-                    // Uncomment this if you want the screen-on animation.
-                    // mAnimationSetting |= ANIM_SETTING_ON;
+                }.
+                if (transitionScale > 0.5f && mElectronBeamAnimationOn) {
                 }
             }
         }
@@ -532,7 +542,7 @@ class PowerManagerService extends IPowerManager.Stub
                 }
             }
         }
-        
+
         mInitComplete = false;
         mHandlerThread = new HandlerThread("PowerManagerService") {
             @Override
@@ -552,7 +562,7 @@ class PowerManagerService extends IPowerManager.Stub
                 }
             }
         }
-        
+
         nativeInit();
         synchronized (mLocks) {
             updateNativePowerStateLocked();
@@ -609,9 +619,12 @@ class PowerManagerService extends IPowerManager.Stub
                         + Settings.System.NAME + "=?) or ("
                         + Settings.System.NAME + "=?) or ("
                         + Settings.System.NAME + "=?) or ("
+                        + Settings.System.NAME + "=?) or ("
+                        + Settings.System.NAME + "=?) or ("
                         + Settings.System.NAME + "=?)",
                 new String[]{STAY_ON_WHILE_PLUGGED_IN, SCREEN_OFF_TIMEOUT, DIM_SCREEN,
-                        SCREEN_BRIGHTNESS_MODE, WINDOW_ANIMATION_SCALE, TRANSITION_ANIMATION_SCALE},
+                        SCREEN_BRIGHTNESS_MODE, WINDOW_ANIMATION_SCALE, TRANSITION_ANIMATION_SCALE, ELECTRON_BEAM_ANIMATION_ON,
+ELECTRON_BEAM_ANIMATION_OFF},
                 null);
         mSettings = new ContentQueryMap(settingsCursor, Settings.System.NAME, true, mHandler);
         SettingsObserver settingsObserver = new SettingsObserver();

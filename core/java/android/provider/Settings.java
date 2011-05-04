@@ -1823,6 +1823,11 @@ public final class Settings {
         /** @hide */
         public static final String EXPANDED_FLASH_MODE = "expanded_flash_mode";
 
+	/** @hide */
+	public static final String ELECTRON_BEAM_ANIMATION_ON = "electron_beam_animation_on";
+
+	/** @hide */
+	public static final String ELECTRON_BEAM_ANIMATION_OFF = "electron_beam_animation_off";
 
 	/** @hide */
 	public static final String OVERSCROLL_EFFECT = "overscroll_effect";
