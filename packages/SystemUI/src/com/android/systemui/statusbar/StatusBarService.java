@@ -153,7 +153,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mTicking;
 
     // Tracking finger for opening/closing.
-    int mEdgeBorder; 
+    int mEdgeBorder;
     // corresponds to R.dimen.status_bar_edge_ignore
     boolean mTracking;
     VelocityTracker mVelocityTracker;
@@ -290,7 +290,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedDialog = new ExpandedDialog(context);
         mExpandedView = expanded;
         mExpandedContents = expanded.findViewById(R.id.notificationLinearLayout);
-        mOngoingTitle = (TextView)expanded.findViewById(R.id.ongoingTitle);
+	mOngoingTitle = (TextView)expanded.findViewById(R.id.ongoingTitle);
         mOngoingItems = (LinearLayout)expanded.findViewById(R.id.ongoingItems);
         mLatestTitle = (TextView)expanded.findViewById(R.id.latestTitle);
         mLatestItems = (LinearLayout)expanded.findViewById(R.id.latestItems);
@@ -1300,7 +1300,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Drawable bg;
 
         /// ---------- Tracking View --------------
-        pixelFormat = PixelFormat.RGBX_8888;
+        pixelFormat = PixelFormat.TRANSLUCENT;
         bg = mTrackingView.getBackground();
         if (bg != null) {
             pixelFormat = bg.getOpacity();
@@ -1427,7 +1427,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             final int closePos = mPositionTmp[1];
 
             mExpandedContents.getLocationInWindow(mPositionTmp);
-            final int contentsBottom = mPositionTmp[1] + mExpandedContents.getHeight();
+            final int contentsBottom = mDisplay.getHeight() - mPowerWidget.getHeight();
 
             if (expandedPosition != EXPANDED_LEAVE_ALONE) {
                 mExpandedParams.y = pos + mTrackingView.getHeight()
