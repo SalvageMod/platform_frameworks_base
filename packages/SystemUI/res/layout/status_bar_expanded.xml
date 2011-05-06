@@ -19,7 +19,7 @@
 */
 -->
 
-<com.android.systemui.statusbar.ExpandedView xmlns:android="http://schemas.android.com/apk/res/android/"
+<com.android.systemui.statusbar.ExpandedView xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:focusable="true"
     android:descendantFocusability="afterDescendants"
