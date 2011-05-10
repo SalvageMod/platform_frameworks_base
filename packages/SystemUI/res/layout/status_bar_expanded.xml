@@ -124,18 +124,12 @@
      android:paddingTop="3dp"
      android:paddingBottom="5dp"
      android:paddingRight="3dp"
-     android:background="@drawable/shade_header_background"
+     android:background="@android:color/transparent"
      >
     <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
 	/>
-    <ImageView
-       android:layout_width="match_parent"
-       android:layout_height="match_parent"
-       android:src="@drawable/title_bar_shadow"
-       android:scaleType="fitXY"
-       />
   </LinearLayout>
 </com.android.systemui.statusbar.ExpandedView>
 
