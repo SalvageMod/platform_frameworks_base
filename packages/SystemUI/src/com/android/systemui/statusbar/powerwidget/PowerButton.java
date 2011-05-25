@@ -101,7 +101,6 @@ public abstract class PowerButton {
                     Resources res = context.getResources();
                     int buttonLayer = R.id.power_widget_button;
                     int buttonIcon = R.id.power_widget_button_image;
-                    int buttonState = R.id.power_widget_button_indic;
 
                     updateImageView(buttonIcon, mIcon);
 
@@ -111,21 +110,6 @@ public abstract class PowerButton {
                     int sColorMaskOff   = (sColorMaskBase & 0x00FFFFFF) | 0x33000000;
                     int sColorMaskInter = (sColorMaskBase & 0x00FFFFFF) | 0x60000000;
 
-                    /* Button State */
-                    switch(mState) {
-                        case STATE_ENABLED:
-                            updateImageView(buttonState,
-                                    res.getDrawable(R.drawable.stat_bgon_custom, sColorMaskOn, MASK_MODE));
-                            break;
-                        case STATE_DISABLED:
-                            updateImageView(buttonState,
-                                    res.getDrawable(R.drawable.stat_bgon_custom, sColorMaskOff, MASK_MODE));
-                            break;
-                        default:
-                            updateImageView(buttonState,
-                                    res.getDrawable(R.drawable.stat_bgon_custom, sColorMaskInter, MASK_MODE));
-                            break;
-                    }
                 }
             }
         };
