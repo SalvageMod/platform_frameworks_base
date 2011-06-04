@@ -180,6 +180,13 @@ public:
     // GPS Processing Method
     // Example value: "GPS" or "NETWORK". Write only.
     static const char KEY_GPS_PROCESSING_METHOD[];
+
+    //Continuous AF.
+    static const char KEY_CAF[];
+    static const char KEY_CONTINUOUS_AF[];
+    static const char KEY_SUPPORTED_CAF[];
+    static const char KEY_SUPPORTED_CONTINUOUS_AF[];
+
     // Current white balance setting.
     // Example value: "auto" or WHITE_BALANCE_XXX constants. Read/write.
     static const char KEY_WHITE_BALANCE[];
@@ -325,6 +332,13 @@ public:
     static const char ANTIBANDING_50HZ[];
     static const char ANTIBANDING_60HZ[];
     static const char ANTIBANDING_OFF[];
+
+    // Values for Continuous AF
+    static const char CAF_OFF[] ;
+    static const char CAF_ON[] ;
+    // Proprietaries from CodeAurora use these...
+    static const char CONTINUOUS_AF_OFF[] ;
+    static const char CONTINUOUS_AF_ON[] ;
 
     // Values for flash mode settings.
     // Flash will not be fired.
