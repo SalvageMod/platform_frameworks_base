@@ -368,6 +368,7 @@ uint32_t OMXCodec::getComponentQuirks(
         quirks |= kRequiresLoadedToIdleAfterAllocation;
         quirks |= kRequiresAllocateBufferOnInputPorts;
         quirks |= kRequiresAllocateBufferOnOutputPorts;
+        quirks |= kCanNotSetVideoParameters;
         if (!strncmp(componentName, "OMX.qcom.video.encoder.avc", 26)) {
 
             // The AVC encoder advertises the size of output buffers
@@ -379,6 +380,7 @@ uint32_t OMXCodec::getComponentQuirks(
         }
     }
     if (!strncmp(componentName, "OMX.qcom.7x30.video.encoder.", 28)) {
+        quirks |= kCanNotSetVideoParameters;
     }
     if (!strncmp(componentName, "OMX.qcom.video.decoder.", 23)) {
         quirks |= kRequiresAllocateBufferOnOutputPorts;
@@ -987,7 +989,7 @@ void OMXCodec::setVideoInputFormat(
 
     video_def->nFrameWidth = width;
     video_def->nFrameHeight = height;
-    video_def->xFramerate = 0;      // No need for output port
+    video_def->xFramerate = (frameRate << 16);      // Value is used on output port for rate control
     video_def->nBitrate = bitRate;  // Q16 format
     video_def->eCompressionFormat = compressionFormat;
     video_def->eColorFormat = OMX_COLOR_FormatUnused;
@@ -1146,7 +1148,9 @@ status_t OMXCodec::setupH263EncoderParameters(const sp<MetaData>& meta) {
 
     status_t err = mOMX->getParameter(
             mNode, OMX_IndexParamVideoH263, &h263type, sizeof(h263type));
-    CHECK_EQ(err, OK);
+    if (!(mQuirks & kCanNotSetVideoParameters)) {
+        CHECK_EQ(err, OK);
+    }
 
     h263type.nAllowedPictureTypes =
         OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
@@ -1173,7 +1177,9 @@ status_t OMXCodec::setupH263EncoderParameters(const sp<MetaData>& meta) {
 
     err = mOMX->setParameter(
             mNode, OMX_IndexParamVideoH263, &h263type, sizeof(h263type));
-    CHECK_EQ(err, OK);
+    if (!(mQuirks & kCanNotSetVideoParameters)) {
+        CHECK_EQ(err, OK);
+    }
 
     CHECK_EQ(setupBitRate(bitRate), OK);
     CHECK_EQ(setupErrorCorrectionParameters(), OK);
@@ -1225,7 +1231,9 @@ status_t OMXCodec::setupMPEG4EncoderParameters(const sp<MetaData>& meta) {
 
     err = mOMX->setParameter(
             mNode, OMX_IndexParamVideoMpeg4, &mpeg4type, sizeof(mpeg4type));
-    CHECK_EQ(err, OK);
+    if (!(mQuirks & kCanNotSetVideoParameters)) {
+        CHECK_EQ(err, OK);
+    }
 
     CHECK_EQ(setupBitRate(bitRate), OK);
     CHECK_EQ(setupErrorCorrectionParameters(), OK);
@@ -1246,7 +1254,9 @@ status_t OMXCodec::setupAVCEncoderParameters(const sp<MetaData>& meta) {
 
     status_t err = mOMX->getParameter(
             mNode, OMX_IndexParamVideoAvc, &h264type, sizeof(h264type));
-    CHECK_EQ(err, OK);
+    if (!(mQuirks & kCanNotSetVideoParameters)) {
+         CHECK_EQ(err, OK);
+     }
 
     h264type.nAllowedPictureTypes =
         OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
@@ -1263,7 +1273,7 @@ status_t OMXCodec::setupAVCEncoderParameters(const sp<MetaData>& meta) {
     defaultProfileLevel.mProfile = h264type.eProfile;
     defaultProfileLevel.mLevel = h264type.eLevel;
     err = getVideoProfileLevel(meta, defaultProfileLevel, profileLevel);
-    if (err != OK) return err;
+    if (!(mQuirks & kCanNotSetVideoParameters) && err != OK) return err;
     h264type.eProfile = static_cast<OMX_VIDEO_AVCPROFILETYPE>(profileLevel.mProfile);
     h264type.eLevel = static_cast<OMX_VIDEO_AVCLEVELTYPE>(profileLevel.mLevel);
 
