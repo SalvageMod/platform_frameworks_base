@@ -74,6 +74,8 @@ import android.net.IThrottleManager;
 import android.net.Uri;
 import android.net.wifi.IWifiManager;
 import android.net.wifi.WifiManager;
+import android.net.wimax.WimaxHelper;
+import android.net.wimax.WimaxManagerConstants;
 import android.nfc.NfcManager;
 import android.os.Binder;
 import android.os.Bundle;
@@ -173,6 +175,7 @@ class ContextImpl extends Context {
     private static ThrottleManager sThrottleManager;
     private static WifiManager sWifiManager;
     private static LocationManager sLocationManager;
+    private static Object sWimaxManager;
     private static final HashMap<String, SharedPreferencesImpl> sSharedPrefs =
             new HashMap<String, SharedPreferencesImpl>();
 
@@ -267,18 +270,18 @@ class ContextImpl extends Context {
     public Looper getMainLooper() {
         return mMainThread.getLooper();
     }
-    
+
     @Override
     public Context getApplicationContext() {
         return (mPackageInfo != null) ?
                 mPackageInfo.getApplication() : mMainThread.getApplication();
     }
-    
+
     @Override
     public void setTheme(int resid) {
         mThemeResource = resid;
     }
-    
+
     @Override
     public Resources.Theme getTheme() {
         if (mTheme == null) {
@@ -455,7 +458,7 @@ class ContextImpl extends Context {
             return mFilesDir;
         }
     }
-    
+
     @Override
     public File getExternalFilesDir(String type) {
         synchronized (mSync) {
@@ -487,7 +490,7 @@ class ContextImpl extends Context {
             return dir;
         }
     }
-    
+
     @Override
     public File getCacheDir() {
         synchronized (mSync) {
@@ -507,7 +510,7 @@ class ContextImpl extends Context {
         }
         return mCacheDir;
     }
-    
+
     @Override
     public File getExternalCacheDir() {
         synchronized (mSync) {
@@ -529,7 +532,7 @@ class ContextImpl extends Context {
             return mExternalCacheDir;
         }
     }
-    
+
     @Override
     public File getFileStreamPath(String name) {
         return makeFilename(getFilesDir(), name);
@@ -570,7 +573,7 @@ class ContextImpl extends Context {
         return (list != null) ? list : EMPTY_FILE_LIST;
     }
 
-    
+
     private File getDatabasesDir() {
         synchronized (mSync) {
             if (mDatabasesDir == null) {
@@ -582,7 +585,7 @@ class ContextImpl extends Context {
             return mDatabasesDir;
         }
     }
-    
+
     @Override
     public Drawable getWallpaper() {
         return getWallpaperManager().getDrawable();
@@ -650,7 +653,7 @@ class ContextImpl extends Context {
         } catch (RemoteException e) {
         }
     }
-    
+
     @Override
     public void sendBroadcast(Intent intent) {
         String resolvedType = intent.resolveTypeIfNeeded(getContentResolver());
@@ -986,6 +989,8 @@ class ContextImpl extends Context {
             return getDownloadManager();
         } else if (NFC_SERVICE.equals(name)) {
             return getNfcManager();
+        } else if (WimaxManagerConstants.WIMAX_SERVICE.equals(name)) {
+            return getWimaxManager();
         }
 
         return null;
@@ -1231,6 +1236,15 @@ class ContextImpl extends Context {
             }
         }
         return mNfcManager;
+    }
+
+    private Object getWimaxManager() {
+        synchronized (sSync) {
+            if (sWimaxManager == null) {
+                sWimaxManager = WimaxHelper.createWimaxService(this, mMainThread.getHandler());
+            }
+        }
+        return sWimaxManager;
     }
 
     @Override

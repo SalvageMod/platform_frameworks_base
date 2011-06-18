@@ -31,6 +31,7 @@ import android.net.MobileDataStateTracker;
 import android.net.NetworkInfo;
 import android.net.NetworkStateTracker;
 import android.net.wifi.WifiStateTracker;
+import android.net.wimax.WimaxHelper;
 import android.net.wimax.WimaxManagerConstants;
 import android.os.Binder;
 import android.os.Handler;
@@ -108,6 +109,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
     private boolean mTestMode;
     private static ConnectivityService sServiceInstance;
+
     private static final int ENABLED  = 1;
     private static final int DISABLED = 0;
 
@@ -424,14 +426,13 @@ public class ConnectivityService extends IConnectivityManager.Stub {
         }
     }
 
+
     private NetworkStateTracker makeWimaxStateTracker() {
         //Initialize Wimax
         DexClassLoader wimaxClassLoader;
         Class wimaxStateTrackerClass = null;
         Class wimaxServiceClass = null;
         Class wimaxManagerClass;
-        String wimaxJarLocation;
-        String wimaxLibLocation;
         String wimaxManagerClassName;
         String wimaxServiceClassName;
         String wimaxStateTrackerClassName;
@@ -443,10 +444,6 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
         if (isWimaxEnabled) {
             try {
-                wimaxJarLocation = mContext.getResources().getString(
-                        com.android.internal.R.string.config_wimaxServiceJarLocation);
-                wimaxLibLocation = mContext.getResources().getString(
-                        com.android.internal.R.string.config_wimaxNativeLibLocation);
                 wimaxManagerClassName = mContext.getResources().getString(
                         com.android.internal.R.string.config_wimaxManagerClassname);
                 wimaxServiceClassName = mContext.getResources().getString(
@@ -454,9 +451,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                 wimaxStateTrackerClassName = mContext.getResources().getString(
                         com.android.internal.R.string.config_wimaxStateTrackerClassname);
 
-                wimaxClassLoader =  new DexClassLoader(wimaxJarLocation,
-                        new ContextWrapper(mContext).getCacheDir().getAbsolutePath(),
-                        wimaxLibLocation,ClassLoader.getSystemClassLoader());
+                wimaxClassLoader = WimaxHelper.getWimaxClassLoader(mContext);
 
                 try {
                     wimaxManagerClass = wimaxClassLoader.loadClass(wimaxManagerClassName);
@@ -1097,6 +1092,9 @@ public class ConnectivityService extends IConnectivityManager.Stub {
             intent.putExtra(ConnectivityManager.EXTRA_REASON, info.getReason());
         }
         if (info.getExtraInfo() != null) {
+            intent.putExtra(ConnectivityManager.EXTRA_REASON, info.getReason());
+        }
+        if (info.getExtraInfo() != null) {
             intent.putExtra(ConnectivityManager.EXTRA_EXTRA_INFO,
                     info.getExtraInfo());
         }
@@ -1142,9 +1140,9 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                 if (mNetAttributes[checkType].isDefault() == false) continue;
                 if (mNetAttributes[checkType].mRadio == ConnectivityManager.TYPE_MOBILE &&
                         noMobileData) {
-                    Slog.e(TAG, "not failing over to mobile type " + checkType +
-                            " because Mobile Data Disabled");
-                    continue;
+                        Slog.e(TAG, "not failing over to mobile type " + checkType +
+                                " because Mobile Data Disabled");
+                        continue;
                 }
                 if (mNetAttributes[checkType].mRadio == ConnectivityManager.TYPE_WIMAX &&
                         noMobileData) {
