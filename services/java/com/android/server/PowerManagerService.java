@@ -266,7 +266,7 @@ class PowerManagerService extends IPowerManager.Stub
     private static final boolean mSpew = false;
     private static final boolean mDebugProximitySensor = (false || mSpew);
     private static final boolean mDebugLightSensor = (false || mSpew);
-    
+
     private native void nativeInit();
     private native void nativeSetPowerState(boolean screenOn, boolean screenBright);
     private native void nativeStartSurfaceFlingerAnimation(int mode);
@@ -478,6 +478,7 @@ class PowerManagerService extends IPowerManager.Stub
                     mAnimationSetting |= ANIM_SETTING_OFF;
                 }
                 if (transitionScale > 0.5f && mElectronBeamAnimationOn) {
+		    mAnimationSetting |= ANIM_SETTING_ON;
                 }
             }
         }
