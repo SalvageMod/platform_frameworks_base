@@ -81,7 +81,7 @@ public class StatusBarPolicy {
     private static final int AM_PM_STYLE_SMALL   = 1;
     private static final int AM_PM_STYLE_GONE    = 2;
 
-    private static int AM_PM_STYLE = AM_PM_STYLE_GONE;
+    private static final int AM_PM_STYLE = AM_PM_STYLE_GONE;
 
     private static final int INET_CONDITION_THRESHOLD = 50;
 
@@ -579,34 +579,11 @@ public class StatusBarPolicy {
         }
     };
 
-    private boolean mShowCmBattery;
-
-    class SettingsObserver extends ContentObserver {
-        SettingsObserver(Handler handler) {
-            super(handler);
-        }
-
-        void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_CM_BATTERY), false, this);
-        }
-
-        @Override public void onChange(boolean selfChange) {
-            updateSettings();
-        }
-    }
-
     public StatusBarPolicy(Context context) {
         mContext = context;
         mService = (StatusBarManager)context.getSystemService(Context.STATUS_BAR_SERVICE);
         mSignalStrength = new SignalStrength();
         mBatteryStats = BatteryStatsService.getService();
-
-        // settings observer for cm-battery change
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
-        updateSettings();
 
         // storage
         mStorageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
@@ -753,7 +730,6 @@ public class StatusBarPolicy {
         final int id = intent.getIntExtra("icon-small", 0);
         int level = intent.getIntExtra("level", 0);
         mService.setIcon("battery", id, level);
-        mService.setIconVisibility("battery", !mShowCmBattery);
 
         boolean plugged = intent.getIntExtra("plugged", 0) != 0;
         level = intent.getIntExtra("level", -1);
@@ -1519,13 +1495,5 @@ public class StatusBarPolicy {
                 break;
             }
         }
-    }
-
-    private void updateSettings(){
-        ContentResolver resolver = mContext.getContentResolver();
-
-        mShowCmBattery = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CM_BATTERY, 0) == 1);
-        mService.setIconVisibility("battery", !mShowCmBattery);
     }
 }
