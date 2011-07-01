@@ -2300,13 +2300,6 @@ public final class Settings {
         public static final String TRACKBALL_UNLOCK_SCREEN = "trackball_unlock_screen";
 
         /**
-         * Whether to use the custom quick unlock screen control
-         * @hide
-         */
-        public static final String LOCKSCREEN_QUICK_UNLOCK_CONTROL =
-            "lockscreen_quick_unlock_control";
-
-        /**
          * Whether to use the custom app on both slider style and rotary style
          * @hide
          */
@@ -2349,6 +2342,13 @@ public final class Settings {
          * @hide
          */
         public static final String IN_CALL_STYLE_PREF = "in_call_style_pref";
+
+        /**
+         * Whether to use the custom quick unlock screen control
+         * @hide
+         */
+        public static final String LOCKSCREEN_QUICK_UNLOCK_CONTROL =
+            "lockscreen_quick_unlock_control";
 
         /**
          * Pulse the Trackball with Screen On.  The value is boolean (1 or 0).
