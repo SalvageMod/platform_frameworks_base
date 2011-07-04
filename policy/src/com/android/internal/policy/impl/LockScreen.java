@@ -669,20 +669,17 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         if (!mShowingBatteryInfo && !mLockAlwaysBattery || mLensePortrait) {
             mCharging = null;
             return;
-	}
+        }
+
         if (mPluggedIn) {
             mChargingIcon =
                 getContext().getResources().getDrawable(R.drawable.ic_lock_idle_charging);
             if (mUpdateMonitor.isDeviceCharged()) {
-                 mCharging = getContext().getString(R.string.lockscreen_charged);
-
-             } else {
-
-                 mCharging = getContext().getString(R.string.lockscreen_plugged_in, mBatteryLevel);
-
-             }
-
-         } else {
+                mCharging = getContext().getString(R.string.lockscreen_charged);
+            } else {
+                mCharging = getContext().getString(R.string.lockscreen_plugged_in, mBatteryLevel);
+            }
+        } else {
             if (mBatteryLevel <= 20) {
                 mChargingIcon =
                     getContext().getResources().getDrawable(R.drawable.ic_lock_idle_low_battery);
@@ -691,12 +688,10 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 mChargingIcon =
                     getContext().getResources().getDrawable(R.drawable.ic_lock_idle_discharging);
                 mCharging = getContext().getString(R.string.lockscreen_discharging, mBatteryLevel);
-
             }
+        }
+    }
 
-         }
-
-     }
     private void refreshMusicStatus() {
         if ((mWasMusicActive || mIsMusicActive || mLockAlwaysMusic
             || (mAudioManager.isWiredHeadsetOn() && useLockMusicHeadsetWired)
