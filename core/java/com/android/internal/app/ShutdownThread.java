@@ -117,11 +117,21 @@ public final class ShutdownThread extends Thread {
                         })
                         .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                               mReboot = true;
+                                mReboot = true;
                                 beginShutdownSequence(context);
                             }
                         })
-                        .setNegativeButton(com.android.internal.R.string.no, null)
+                        .setNegativeButton(com.android.internal.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                mReboot = false;
+                                dialog.cancel();
+	                            }
+	                        })
+	                        .setOnCancelListener(new DialogInterface.OnCancelListener() {
+	                            public void onCancel(DialogInterface dialog) {
+	                                mReboot = false;
+                            }
+                        })
                         .create();
             } else {
                 dialog = new AlertDialog.Builder(context)
