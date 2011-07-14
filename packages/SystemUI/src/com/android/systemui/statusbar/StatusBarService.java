@@ -1302,7 +1302,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Drawable bg;
 
         /// ---------- Tracking View --------------
-        mUseTransparentStatusBar = (Settings.System.getInt(getApplicationContext().getContentResolver(), Settings.System.USE_TRANSPARENT_STATUSBAR, 1) == 1);
+        mUseTransparentStatusBar = (Settings.System.getInt(getApplicationContext().getContentResolver(), Settings.System.USE_TRANSPARENT_STATUSBAR, 0) == 1);
         if (mUseTransparentStatusBar) {
         	pixelFormat = PixelFormat.TRANSLUCENT;
         	
