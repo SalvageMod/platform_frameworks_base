@@ -47,6 +47,7 @@ public abstract class PowerButton {
     public static final String BUTTON_AIRPLANE = "toggleAirplane";
     public static final String BUTTON_FLASHLIGHT = "toggleFlashlight";
     public static final String BUTTON_SLEEP = "toggleSleepMode";
+    public static final String BUTTON_SCREENSHOT = "toggleScreenshotMode";
     public static final String BUTTON_MEDIA_PLAY_PAUSE = "toggleMediaPlayPause";
     public static final String BUTTON_MEDIA_PREVIOUS = "toggleMediaPrevious";
     public static final String BUTTON_MEDIA_NEXT = "toggleMediaNext";
@@ -73,6 +74,7 @@ public abstract class PowerButton {
         BUTTONS.put(BUTTON_AIRPLANE, AirplaneButton.class);
         BUTTONS.put(BUTTON_FLASHLIGHT, FlashlightButton.class);
         BUTTONS.put(BUTTON_SLEEP, SleepButton.class);
+        BUTTONS.put(BUTTON_SCREENSHOT, ScreenshotButton.class);
         BUTTONS.put(BUTTON_MEDIA_PLAY_PAUSE, MediaPlayPauseButton.class);
         BUTTONS.put(BUTTON_MEDIA_PREVIOUS, MediaPreviousButton.class);
         BUTTONS.put(BUTTON_MEDIA_NEXT, MediaNextButton.class);
