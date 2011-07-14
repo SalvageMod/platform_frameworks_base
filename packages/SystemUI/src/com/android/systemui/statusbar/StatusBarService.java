@@ -20,6 +20,7 @@ import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.internal.statusbar.StatusBarIconList;
 import com.android.internal.statusbar.StatusBarNotification;
+
 import com.android.systemui.statusbar.powerwidget.PowerWidget;
 import com.android.systemui.R;
 
@@ -111,6 +112,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mStatusIcons;
 
     // expanded notifications
+    private boolean mUseTransparentStatusBar = true;
     Dialog mExpandedDialog;
     ExpandedView mExpandedView;
     WindowManager.LayoutParams mExpandedParams;
@@ -1300,7 +1302,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Drawable bg;
 
         /// ---------- Tracking View --------------
-        pixelFormat = PixelFormat.TRANSLUCENT;
+        mUseTransparentStatusBar = (Settings.System.getInt(getApplicationContext().getContentResolver(), Settings.System.USE_TRANSPARENT_STATUSBAR, 1) == 1);
+        if (mUseTransparentStatusBar) {
+        	pixelFormat = PixelFormat.TRANSLUCENT;
+        	
+        } else {
+        	pixelFormat = PixelFormat.RGBX_8888;
+        }
+        
         bg = mTrackingView.getBackground();
         if (bg != null) {
             pixelFormat = bg.getOpacity();

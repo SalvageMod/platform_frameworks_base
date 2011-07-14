@@ -2583,6 +2583,8 @@ public final class Settings {
          */
         public static final String OVERSCROLL_WEIGHT = "overscroll_weight";
 
+        public static final String USE_TRANSPARENT_STATUSBAR = "use_transparent_statusbar";
+
         /**
          * Whether or not volume button music controls should be enabled to seek media tracks
          * @hide
