@@ -22,7 +22,7 @@
 
     <!-- The text for the button in the notification window-shade that clears
          all of the currently visible notifications. -->
-    <string name="status_bar_clear_all_button">Clear</string>
+    <string name="status_bar_clear_all_button">\u2771\u2771 Touch to clear notifications \u2770\u2770</string>
 
     <!-- The label in the bar at the top of the status bar when there are no notifications
          showing. -->
