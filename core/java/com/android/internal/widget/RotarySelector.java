@@ -359,6 +359,19 @@ public class RotarySelector extends View {
         invalidate();
     }
 
+     /**
+     * Sets the left handle icon to a given drawable.
+     *
+     * The argument should refer to a Drawable object, or use 0 to remove
+     * the icon.
+     *
+     * @param icon Bitmap object.
+     */
+    public void setLeftHandleResource(Bitmap icon) {
+        mLeftHandleIcon=icon;
+        invalidate();
+    }
+
     /**
      * Sets the right handle icon to a given resource.
      *
@@ -386,6 +399,19 @@ public class RotarySelector extends View {
         if (resId != 0) {
             mMidHandleIcon = getBitmapFor(resId);
         }
+        invalidate();
+    }
+
+    /**
+     * Sets the middle handle icon to a given drawable.
+     *
+     * The argument should refer to a Drawable object, or use 0 to remove
+     * the icon.
+     *
+     * @param icon Bitmap object.
+     */
+    public void setMidHandleResource(Bitmap icon) {
+        mMidHandleIcon=icon;
         invalidate();
     }
 
