@@ -17,8 +17,8 @@
 
 package com.android.systemui.statusbar;
 
-import android.app.AlertDialog;
 import android.app.StatusBarManager;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothHeadset;
@@ -30,6 +30,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
+import android.content.res.TypedArray;
+import android.graphics.PixelFormat;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
 import android.media.AudioManager;
@@ -49,8 +52,16 @@ import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
+import android.text.format.DateFormat;
+import android.text.style.CharacterStyle;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.util.Slog;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
 import android.widget.ImageView;
@@ -63,6 +74,7 @@ import com.android.internal.telephony.TelephonyIntents;
 import com.android.internal.telephony.cdma.EriInfo;
 import com.android.internal.telephony.cdma.TtyIntent;
 import com.android.server.am.BatteryStatsService;
+
 import com.android.systemui.R;
 import android.net.wimax.WimaxManagerConstants;
 
@@ -458,6 +470,9 @@ public class StatusBarPolicy {
     ServiceState mServiceState;
     SignalStrength mSignalStrength;
 
+    // flag for signal strength behavior
+    private boolean mAlwaysUseCdmaRssi;
+
     // data connection
     private boolean mDataIconVisible;
     private boolean mHspaDataDistinguishable;
@@ -506,6 +521,7 @@ public class StatusBarPolicy {
     private boolean mIsWimaxEnabled = false;
     private int mWimaxSignal = 0;
     private int mWimaxState = 0;
+    private int mWimaxExtraState = 0;
 
     // state of inet connection - 0 not connected, 100 connected
     private int mInetCondition = 0;
@@ -597,6 +613,8 @@ public class StatusBarPolicy {
         mPhone = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
         mPhoneSignalIconId = R.drawable.stat_sys_signal_null;
         mService.setIcon("phone_signal", mPhoneSignalIconId, 0);
+        mAlwaysUseCdmaRssi = mContext.getResources().getBoolean(
+            com.android.internal.R.bool.config_alwaysUseCdmaRssi);
 
         // register for phone state notifications.
         ((TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE))
